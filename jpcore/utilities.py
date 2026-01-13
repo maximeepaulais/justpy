@@ -89,9 +89,10 @@ def run_task(task):
         print("Error: run_task called but no asyncio loop is running.")
 
 
-async def create_delayed_task(task, delay, loop):
+async def create_delayed_task(task, delay):
     await asyncio.sleep(delay)
-    loop.create_task(task)
+    # asyncio.create_task automatically finds the running loop in Py3.7+
+    asyncio.create_task(task)
 
 
 def print_func_info(*args):
