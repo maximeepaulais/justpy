@@ -79,7 +79,11 @@ def server_error_func(request):
 
 @app.on_event("startup")
 async def justpy_startup():
-    WebPage.loop = asyncio.get_event_loop()
+    # --- CHANGE HERE ---
+    # OLD: WebPage.loop = asyncio.get_event_loop()
+    # NEW: Since we are inside an async startup event, the loop is 100% running.
+    WebPage.loop = asyncio.get_running_loop() 
+    # -------------------
     JustPy.loop = WebPage.loop
     JustPy.STATIC_DIRECTORY = jpconfig.STATIC_DIRECTORY
 
@@ -103,15 +107,17 @@ class JustpyEvents(WebSocketEndpoint):
 
     socket_id = 0
 
-    async def on_connect(self, websocket):
+async def on_connect(self, websocket):
         await websocket.accept()
         websocket.id = JustpyEvents.socket_id
         websocket.open = True
         logging.debug(f"Websocket {JustpyEvents.socket_id} connected")
         JustpyEvents.socket_id += 1
-        # Send back socket_id to page
-        # await websocket.send_json({'type': 'websocket_update', 'data': websocket.id})
-        WebPage.loop.create_task(
+        
+        # --- CHANGE HERE ---
+        # OLD: WebPage.loop.create_task(...)
+        # NEW: asyncio.create_task(...) is safer and cleaner
+        asyncio.create_task(
             websocket.send_json({"type": "websocket_update", "data": websocket.id})
         )
 
@@ -144,7 +150,7 @@ class JustpyEvents(WebSocketEndpoint):
             # await self._event(data_dict)
             data_dict["event_data"]["msg_type"] = msg_type
             page_event = True if msg_type == "page_event" else False
-            WebPage.loop.create_task(
+            asyncio.create_task(
                 handle_event(data_dict, com_type=0, page_event=page_event)
             )
             return
@@ -155,7 +161,7 @@ class JustpyEvents(WebSocketEndpoint):
                 session_id = cookie_signer.unsign(session_cookie).decode("utf-8")
                 data_dict["event_data"]["session_id"] = session_id
             data_dict["event_data"]["msg_type"] = msg_type
-            WebPage.loop.create_task(
+            asyncio.create_task(
                 handle_event(data_dict, com_type=0, page_event=True)
             )
             return
