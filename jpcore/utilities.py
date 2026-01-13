@@ -78,8 +78,15 @@ def run_task(task):
     """
     Helper function to facilitate running a task in the async loop
     """
-    loop = asyncio.get_event_loop()
-    loop.create_task(task)
+    try:
+        # 1. Try to get the loop that is actually running right now
+        loop = asyncio.get_running_loop()
+        loop.create_task(task)
+    except RuntimeError:
+        # 2. If no loop is running, we cannot schedule the task.
+        # In Python 3.13, creating a new loop here via get_event_loop() 
+        # would be useless because that new loop wouldn't be running.
+        print("Error: run_task called but no asyncio loop is running.")
 
 
 async def create_delayed_task(task, delay, loop):
