@@ -108,18 +108,18 @@ class JustpyEvents(WebSocketEndpoint):
     socket_id = 0
     
     async def on_connect(self, websocket):
-            await websocket.accept()
-            websocket.id = JustpyEvents.socket_id
-            websocket.open = True
-            logging.debug(f"Websocket {JustpyEvents.socket_id} connected")
-            JustpyEvents.socket_id += 1
-            
-            # --- CHANGE HERE ---
-            # OLD: WebPage.loop.create_task(...)
-            # NEW: asyncio.create_task(...) is safer and cleaner
-            asyncio.create_task(
-                websocket.send_json({"type": "websocket_update", "data": websocket.id})
-            )
+        await websocket.accept()
+        websocket.id = JustpyEvents.socket_id
+        websocket.open = True
+        logging.debug(f"Websocket {JustpyEvents.socket_id} connected")
+        JustpyEvents.socket_id += 1
+        
+        # --- CHANGE HERE ---
+        # OLD: WebPage.loop.create_task(...)
+        # NEW: asyncio.create_task(...) is safer and cleaner
+        asyncio.create_task(
+            websocket.send_json({"type": "websocket_update", "data": websocket.id})
+        )
 
     async def on_receive(self, websocket, data):
         """
